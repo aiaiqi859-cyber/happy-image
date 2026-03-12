@@ -1,89 +1,89 @@
 # Happy-Image
 
-Happy-Image is a smart image generation plugin for SillyTavern that leverages AI to automatically create and embed images in your conversations. This plugin features a sophisticated three-tier API architecture:
+Happy-Image 是一款智能图像生成插件，适用于 SillyTavern，利用AI自动在对话中创建和嵌入图像。该插件采用复杂的三层API架构：
 
-- API1: Primary API for chatting with users (not involved in image generation)
-- API2: Separate LLM for generating detailed image prompts based on conversation content
-- API3: Tavern-integrated image generation model for creating and inserting images
+- API1: 用于与用户聊天的主要API（不参与图像生成）
+- API2: 专门的LLM，可根据对话内容生成详细图像提示
+- API3: 与Tavern集成的图像生成模型，用于创建和插入图像
 
-## Features
+## 功能特点
 
-- **Smart Image Generation**: Three-tiered approach to intelligently process conversations and generate matching images
-- **Flexible Trigger Options**: Choose from manual (floating button), keyword detection, or auto-generation
-- **Multiple API Configurations**: Three ways to set up LLM for prompt generation:
-  - Use Tavern's current API
-  - Use predefined connection presets
-  - Use custom API endpoint configuration
-- **Bilingual Prompts**: Images generated with both English (for generation) and Chinese (for commentary) prompts
-- **Multiple Insertion Methods**: Choose to insert images at various positions:
-  - Replace triggered text
-  - End of message 
-  - Beginning of message
-  - New message entirely
-- **Customizable Prompt Templates**: Edit the LLM prompt template to customize how image prompts are generated
-- **Comprehensive Logging**: Detailed debugging logs for development and troubleshooting
+- **智能图像生成**: 三层方法智能处理对话并生成匹配的图像
+- **灵活触发选项**: 可选择手动(浮动按钮)、关键词检测或自动生成
+- **多种API配置**: 三种方式为提示生成设置LLM:
+  - 使用Tavern当前API
+  - 使用预定义连接预设
+  - 使用自定义API端点配置
+- **双语提示**: 生成的图像同时包含英文(用于生成)和中文(用于注释)提示
+- **多种插入方法**: 可选择在不同位置插入图像:
+  - 替换触发文本
+  - 消息末尾
+  - 消息开头
+  - 完全新消息
+- **可自定义提示模板**: 编辑LLM提示模板，自定义图像提示生成方式
+- **全面日志记录**: 用于开发和故障排除的详细调试日志
 
-## Installation
+## 安装
 
-1. Place the Happy-Image folder in your SillyTavern `scripts/extensions/third-party` directory
-2. Enable the extension in your SillyTavern extensions settings
+1. 将 Happy-Image 文件夹放在 SillyTavern 的 `scripts/extensions/third-party` 目录中
+2. 在 SillyTavern 扩展设置中启用该扩展
 
-## Configuration
+## 配置
 
-### General Settings
+### 常规设置
 
-- Enable/Disable the plugin
-- Select Task Trigger Mode (Manual, Keyword, Auto)
-- Set keyword list (for keyword-triggered mode)
-  - Keywords should be comma-separated (e.g., "image, pic, art")
+- 启用/禁用插件
+- 选择任务触发模式(手动、关键词、自动)
+- 设置关键词列表(用于关键词触发模式)
+  - 关键词应以逗号分隔(例如："image, pic, art")
 
-### API2 Configuration (For Generating Prompts)
+### API2 配置(用于生成提示)
 
-Choose your prompt generation API source:
+选择提示生成 API 源：
 
-1. **Use Tavern's Main API**: Use SillyTavern's currently configured API for prompt creation
-2. **Use Connection Preset**: Select from predefined API configurations (coming soon)
-3. **Custom Configuration**: Configure with:
+1. **使用 Tavern 主 API**: 使用 SillyTavern 当前配置的 API 进行提示创建
+2. **使用连接预设**: 从预定义的 API 配置中选择(即将推出)
+3. **自定义配置**: 使用以下内容配置:
    - API URL
-   - API Key
-   - Model name
+   - API 密钥
+   - 模型名称
 
-### Prompt Template (For LLM Configuration)
+### 提示生成模板 (LLM 配置)
 
-Edit the system prompt that's sent to API2 with conversation content. This template controls:
+编辑发送到 API2 的系统提示，包含对话内容。此模板控制：
 
-- How the LLM processes the incoming message
-- What information to include in generated image prompts
-- Output format of JSON containing English/Chinese prompts and position information
+- LLM 如何处理传入消息
+- 生成图像提示时包含的信息
+- 输出包含英文/中文提示和位置信息的JSON格式
 
-Default template includes English and Chinese prompt pairs along with positioning data.
+默认模板包括英文和中文提示对以及定位数据。
 
-### Insertion Settings
+### 插入设置
 
-Choose how your generated images will embed in the chat:
+选择生成的图像如何嵌入聊天：
 
-- **Replace Keyword/Trigger**: Replaces the original trigger phrase with image (default)
-- **End of Message**: Appends to end of AI message
-- **New Message**: Creates new AI message containing just the image
-- **Beginning of Message**: Inserts at start of message with generated content moved after
+- **替换关键词/触发器**: 用图像替换原始触发词(默认)
+- **消息末尾**: 附加到AI消息末尾
+- **新消息**: 创建仅包含图像的新AI消息
+- **消息开头**: 插入到消息开头，生成内容移到后面
 
-### Image Saving (Browser Security Limitations)
+### 图像保存 (浏览器安全限制)
 
-- **Enable Saving**: Allows browser to attempt downloading images to a local folder (not possible due to browser security restrictions; included for future implementation)
-- When possible, saves with character-name-based subfolder organization
+- **启用保存**: 允许浏览器尝试将图像下载到本地文件夹(由于浏览器安全限制，无法实现；为未来实施而包含)
+- 可能时，按照基于角色名称的子文件夹进行保存
 
-### Debug Settings
+### 调试设置
 
-- Enable/Disable debug logs
-- Select detail level: debug, info, warn, or error
-- Enable toast notifications for status updates
+- 启用/禁用调试日志
+- 选择详细级别: debug, info, warn, error
+- 为状态更新启用弹窗通知
 
-## Development & Testing
+## 开发与测试
 
-To ensure your image generation is working:
-1. Configure your Tavern SD integration properly
-2. Set the API2 for prompt generation with a working language model
-3. Set trigger to "keyword" and enter relevant words in your chat
-4. Look for images in your chat UI
+要确保图像生成正常工作：
+1. 正确配置 Tavern SD 集成
+2. 设置 API2 用于提示生成，配置一个工作语言模型
+3. 将触发器设置为"关键词"，并在聊天中输入相关词语
+4. 查看聊天界面中的图像
 
-This plugin was created with functionality based on the similar `st-image-auto-generation-main` and `Engram-master` projects for reference implementation.
+此插件是基于类似的 `st-image-auto-generation-main` 和 `Engram-master` 项目功能创建的参考实现。
