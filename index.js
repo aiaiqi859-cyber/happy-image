@@ -6,7 +6,6 @@ import {
     saveSettingsDebounced,
     eventSource,
     event_types,
-    showToast,
     appendMediaToMessage
 } from '../../../../script.js';
 import { regexFromString } from '../../../utils.js';
@@ -599,6 +598,31 @@ function logError(message, ...args) {
     if (!extSettings.debug || !extSettings.debug.enabled) return;
     if (extSettings.debug.logLevel !== 'error') return; // Only log if level is error
     console.error(`[Happy-Image ERROR]`, message, ...args);
+}
+
+// Create a toast notification if enabled
+function showToast(message, type = 'info') {
+    if (!extSettings.debug.showToasts) return;
+    
+    // Use the available toast notification system in tavern
+    if (typeof toastr !== 'undefined') {
+        switch (type) {
+            case 'success':
+                toastr.success(message, 'Happy-Image');
+                break;
+            case 'error':
+                toastr.error(message, 'Happy-Image');
+                break;
+            case 'warning':
+                toastr.warning(message, 'Happy-Image');
+                break;
+            default:
+                toastr.info(message, 'Happy-Image');
+        }
+    } else {
+        // Fallback to alert if toastr is not available
+        alert(`Happy-Image: ${message}`);
+    }
 }
 
 // Test API connections
