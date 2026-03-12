@@ -61,34 +61,34 @@ const defaultSettings = {
     
     // Prompt engineering settings
     promptTemplate: `<IMAGE_PROMPT_TEMPLATE>
-You are an expert image prompt engineer for an AI visual novel application. Your task is to generate image generation prompts based on the following input:
+你是一个专门用于AI视觉小说应用的图像提示词工程师。你的任务是根据以下输入内容生成图像生成的提示词:
 
-Input: {{message_content}}
+输入: {{message_content}}
 
-Instructions:
-1. Generate a maximum of 3 prompts per request (if multiple distinct scenes occur in the message)
-2. Each prompt should be in both English and Chinese (English for image generation, Chinese as commentary)
-3. Use a maximum of 50 English words for each prompt
-4. Ensure prompts fit the style and characteristics mentioned in the input
-5. Emphasize character descriptions using provided character notes if available
-6. Structure each prompt as follows:
-   - English: [scene], [character descriptions], [expressions], [clothing], [actions], [setting], [art style]
-   - Chinese: [Chinese translation of the English prompt]
+说明:
+1. 每次请求最多生成3个提示词（如果消息中出现多个不同场景）
+2. 每个提示词应同时包含英文和中文（英文用于图像生成，中文作为注释）
+3. 每个提示词英文最多使用50个单词
+4. 确保生成的提示词符合输入中提到的风格和特征
+5. 强调使用提供的角色描述和注释中的特征信息
+6. 提示词结构如下:
+   - 英文: [场景], [角色描述], [表情], [服装], [动作], [背景], [艺术风格]
+   - 中文: [英文提示词的中文翻译]
 
-Format for each prompt:
+每个提示词的格式:
 \`\`\`json
 {
   "tasks": [
     {
-      "english_prompt": "English prompt here",
-      "chinese_prompt": "Chinese translation here",
-      "position": "end_of_message" // options: after_paragraph_1, after_paragraph_2, end_of_message, beginning_of_message
+      "english_prompt": "这里放英文提示词",
+      "chinese_prompt": "这里放中文提示词",
+      "position": "end_of_message" // 位置选项: after_paragraph_1, after_paragraph_2, end_of_message, beginning_of_message
     }
   ]
 }
 \`\`\`
 
-Important: Return only the JSON with properly structured prompts. Do not include any other text outside the JSON.
+重要提示: 只返回带有结构化提示词的JSON数据，不要包含JSON以外的其他文本内容。
 </IMAGE_PROMPT_TEMPLATE>`,
     
     // Image saving settings
@@ -690,13 +690,21 @@ async function testCustomApiConnection(url, key, model) {
 function registerEventListeners() {
     // Listen to message events to trigger image generation based on settings
     eventSource.on(event_types.MESSAGE_RECEIVED, async function() {
-        if (!extSettings.enabled) return;
+        logInfo('收到来自Tavern的消息事件.');
+        if (!extSettings.enabled) {
+            logInfo('插件已禁用，跳过图像生成.');
+            return;
+        }
         
         const triggerMode = extSettings.taskTrigger;
+        logInfo(`触发模式: ${triggerMode}, 扩展已启用: ${extSettings.enabled}`);
         
         if (triggerMode === TASK_TRIGGER.AUTO) {
+            logInfo('自动模式启用，开始处理最后一条消息.');
             // Automatically trigger image generation on each message
             await handleAutoImageGeneration();
+        } else {
+            logInfo(`当前触发模式为 ${triggerMode}，跳过自动处理.`);
         }
         // For keyword-triggered generation, we'll check in the message itself
     });
@@ -708,10 +716,14 @@ function registerEventListeners() {
     
     // For message updates (e.g., when model responses stream in)
     eventSource.on(event_types.MESSAGE_UPDATED, async function(mesId) {
-        logDebug(`Message ${mesId} updated, checking for keywords`);
+        logInfo(`收到消息更新事件，消息ID: ${mesId}, 检查是否包含关键词.`);
+        logInfo(`插件状态: ${extSettings.enabled}, 触发模式: ${extSettings.taskTrigger}`);
         
         if (extSettings.enabled && extSettings.taskTrigger === TASK_TRIGGER.KEYWORD) {
+            logInfo('关键词模式启用，开始处理关键词触发.');
             await handleKeywordBasedImageGeneration(mesId);
+        } else {
+            logInfo(`不满足关键词处理条件，跳过处理. 启用: ${extSettings.enabled}, 触发: ${extSettings.taskTrigger}`);
         }
     });
 }
@@ -770,56 +782,71 @@ async function handleKeywordBasedImageGeneration(mesId) {
 // Process a message to generate images based on its content
 async function processMessageForImages(message) {
     try {
-        logDebug('Processing message for image generation', message);
+        logInfo('开始处理消息以生成图像', message);
+        showToast('开始处理图像生成...', 'info');
         
         // First, generate prompts using API2
         const promptTasks = await generateImagePrompts(message.mes);
         
         if (!promptTasks || promptTasks.length === 0) {
-            logDebug('No image prompts generated for message');
+            logInfo('消息未生成图像提示词:');
+            logInfo('消息内容: ' + message.mes.substring(0, 100) + '...');
+            showToast('未找到需要生成的图像提示词', 'warning');
             return;
         }
         
-        logDebug('Generated image prompt tasks:', promptTasks);
+        logInfo('生成的图像提示词任务数量:', promptTasks.length);
+        logInfo('生成的图像提示词任务详情:', promptTasks);
         
         // Then, for each prompt, generate an actual image using API3 (Tavern's SD)
         for (const task of promptTasks) {
+            logInfo(`处理提示词任务: ${task.english_prompt.substring(0, 50)}...`);
             await generateImageFromPrompt(task);
         }
+        showToast(`完成${promptTasks.length}个图像的生成请求`, 'success');
     } catch (e) {
-        logError('Message image processing error:', e);
-        showToast(`Error processing image for message: ${e.message}`, 'error');
+        logError('处理消息生成图像时出错:', e);
+        showToast(`处理图像生成时出错: ${e.message}`, 'error');
     }
 }
 
 // Generate image prompts using API2 based on message content
 async function generateImagePrompts(messageContent) {
     try {
-        logDebug('Generating prompts from content:', messageContent);
+        logInfo('开始使用API2从内容生成提示词:', messageContent.substring(0, 100) + '...');
+        showToast('正在生成图像提示词...', 'info');
         
         // Get custom API config if using custom source
         let customApi = null;
+        logInfo('API2 配置来源:', extSettings.api2Config.source);
         
         if (extSettings.api2Config.source === API_SOURCE.CUSTOM) {
             customApi = extSettings.api2Config.customConfig;
+            logInfo('使用自定义API配置:', { model: customApi.model, apiUrl: customApi.apiUrl });
         } else if (extSettings.api2Config.source === API_SOURCE.TAVERN) {
+            logInfo('使用Tavern当前API配置');
             // If using tavern API, pass null so tavern uses its default settings
             customApi = null;
         } else if (extSettings.api2Config.source === API_SOURCE.PRESET) {
             // Using preset - implementation depends on how Tavern handles presets
             // For now using null and letting tavern decide
             customApi = null;
+            logInfo('使用预设配置');
         }
         
         // Format the prompt template with the message content
         const promptTemplate = extSettings.promptTemplate;
         const prompt = promptTemplate.replace('{{message_content}}', messageContent);
+        logDebug('完整API调用提示词:', prompt);
         
         // Use TavernHelper to call the API with a custom config if needed
         let result;
+        logInfo('正在调用API生成提示词...');
+        showToast('调用AI生成提示词...', 'info');
         
         if (customApi) {
             // Use custom API
+            logInfo('使用自定义API配置进行调用');
             result = await window.TavernHelper?.generate?.({
                 generate: prompt,
                 custom_api: {
@@ -839,6 +866,7 @@ async function generateImagePrompts(messageContent) {
             });
         } else {
             // Use tavern's configured API
+            logInfo('使用Tavern默认API进行调用');
             result = await window.TavernHelper?.generate?.({
                 generate: prompt
             }) || await generateRaw({
@@ -846,15 +874,18 @@ async function generateImagePrompts(messageContent) {
             });
         }
         
+        logInfo('API调用完成，收到原始结果.');
+        logInfo('原始API结果:', result);
+        showToast('提示词生成完成，正在解析结果...', 'info');
+        
         // Parse the result to extract English and Chinese prompts
         // The result should be in the format specified in the prompt template
         const parsedResult = parseApiResult(result);
-        
-        logDebug('Parsed API result:', parsedResult);
+        logInfo('解析后的API结果:', parsedResult);
         return parsedResult.tasks || [];
     } catch (e) {
-        logError('Prompt generation error:', e);
-        showToast(`Error generating image prompts: ${e.message}`, 'error');
+        logError('生成提示词时出错:', e);
+        showToast(`生成图像提示词时出错: ${e.message}`, 'error');
         return [];
     }
 }
